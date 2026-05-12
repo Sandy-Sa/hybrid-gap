@@ -1,0 +1,49 @@
+[project]
+name = "hybrid-gap"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "bm25s",
+  "datasets",
+  "dvc",
+  "huggingface-hub",
+  "ipykernel",
+  "ipython",
+  "jsonargparse",
+  "lightning",
+  "notebook",
+  "numpy",
+  "openai",
+  "pandas",
+  "peft",
+  "polars",
+  "pyarrow",
+  "pydantic",
+  "pypdf",
+  "PyStemmer",
+  "python-dotenv",
+  "scikit-learn",
+  "scipy",
+  "tiktoken",
+  "torch",
+  "torchmetrics",
+  "tqdm",
+  "transformers",
+  "wandb",
+]
+
+
+[[tool.uv.index]]
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu129", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+
+[tool.uv]
+environments = [
+  "python_full_version == '3.12.*' and (sys_platform == 'linux' or sys_platform == 'win32')"
+]
