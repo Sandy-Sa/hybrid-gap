@@ -1,0 +1,63 @@
+schema: '2.0'
+stages:
+  pre_processing:
+    cmd: python pre_process.py /datasets/mimic/ MIMIC-III-CLEAN 
+      --remove_lab_results true --processed_data_path 
+      data/processed_data.parquet
+    deps:
+    - path: pre_process.py
+      hash: md5
+      md5: a60e0072931deaee263cb4e8a01b9f3e
+      size: 2515
+    params:
+      params.yaml:
+        dataset_name: MIMIC-III-CLEAN
+        processed_data_path: data/processed_data.parquet
+        raw_data_path: /datasets/mimic/
+        remove_lab_results: true
+    outs:
+    - path: data/processed_data.parquet
+      hash: md5
+      md5: b437e21132602da7343d92c7a187f99f
+      size: 176069776
+  prepare:
+    cmd: python prepare.py data/processed_data.parquet data/datasets/ icd9 
+      ["diagnoses_code","procedure_code"] Qwen/Qwen3-0.6B 
+      data/splits/mimiciii_clean_splits.feather --max_length 4096 --batch_size 
+      4096 --truncation_side left
+    deps:
+    - path: data/processed_data.parquet
+      hash: md5
+      md5: b437e21132602da7343d92c7a187f99f
+      size: 176069776
+    - path: prepare.py
+      hash: md5
+      md5: 3e64fa678effc75aeb39417dd9ace4d5
+      size: 8387
+    params:
+      params.yaml:
+        model_name: Qwen/Qwen3-0.6B
+        prepare:
+          target_type: icd9
+          target_columns: '["diagnoses_code","procedure_code"]'
+          batch_size: 4096
+          split_path: data/splits/mimiciii_clean_splits.feather
+          truncation_side: left
+        seq_len: 4096
+    outs:
+    - path: data/datasets/class_map.parquet
+      hash: md5
+      md5: 00b61c8b816df7e93a01af94c2408e85
+      size: 16659
+    - path: data/datasets/test_dataset.parquet
+      hash: md5
+      md5: bdcad8f9628286ac6447840cb7583a1b
+      size: 68627731
+    - path: data/datasets/train_dataset.parquet
+      hash: md5
+      md5: 0a11968afbdaa2a1433acccf281d85c6
+      size: 305516328
+    - path: data/datasets/val_dataset.parquet
+      hash: md5
+      md5: d3e5bc8525fe0d5545424b4646ba8056
+      size: 45095296

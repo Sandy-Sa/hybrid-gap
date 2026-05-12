@@ -1,10 +1,8 @@
-# Combined parameters for the SFT → LLM gap-fill pipeline.
-
 # === Shared ===
 seed: 314
 
 # === SFT data prep ===
-raw_data_path: /scratch/gp50/zs5704/datasets/mimic-data/
+raw_data_path: /datasets/mimic/
 processed_data_path: data/processed_data.parquet
 dataset_name: MIMIC-III-CLEAN
 remove_lab_results: true
@@ -18,7 +16,7 @@ prepare:
 seq_len: 4096
 
 # === SFT train ===
-model_name: Qwen/Qwen3-0.6B          # SFT backbone (HuggingFace identifier)
+model_name: Qwen/Qwen3-0.6B       
 train:
   ckp_path: none
   module: label_attention
@@ -41,7 +39,7 @@ train:
   logger:
     logger:
       project: study2_gadi
-      save_dir: /scratch/gp50/zs5704/projects/llm-coding/.wandb/
+      save_dir: .wandb/
 
 # === SFT evaluate (val threshold sweep + test predictions) ===
 evaluate_sft:
