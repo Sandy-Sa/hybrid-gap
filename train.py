@@ -3,7 +3,7 @@ import torch
 import os
 import polars as pl
 from coding.data.data_prep import get_dataloaders
-from coding.modules.base import LowRankAdaptationConfig
+from coding.modules.base import LowRankAdaptationConfig, OptimiserConfig
 from coding.modules.classifier import LLMClassifier
 from coding.modules.label_attention import LLMLabelAttention
 from coding.modules.label_cross_attention import LLMLabelCrossAttention
@@ -27,13 +27,6 @@ from typing import Optional
 
 torch.backends.cuda.matmul.allow_tf32 = True  # allow tf32 on matmul
 torch.backends.cudnn.allow_tf32 = True  # allow tf32 on cudnn
-
-
-@dataclass
-class OptimiserConfig:
-    lr: float = 1e-3
-    weight_decay: float = 1e-3
-    betas: tuple = (0.9, 0.95)
 
 
 @dataclass
@@ -97,6 +90,9 @@ def train(
     lora_config: Optional[LowRankAdaptationConfig] = None,
     logger: Optional[WandbConfig] = None,
     seed: int = DEFAULT_SEED,
+    limit_train_batches: Optional[float] = None,
+    limit_val_batches: Optional[float] = None,
+    max_steps: int = -1,
 ):
     """Fine-tune a language model to predict ICD codes.
 
@@ -189,11 +185,16 @@ def train(
         "logger": pl_logger,
         "precision": "bf16-true",
         "max_epochs": max_epochs,
+        "max_steps": max_steps,
         "accumulate_grad_batches": accumulate_grad_batches,
         "callbacks": [checkpoint_callback, LearningRateMonitor("epoch"), es],
         "deterministic": True,
         "profiler": "simple",
     }
+    if limit_train_batches is not None:
+        trainer_config["limit_train_batches"] = limit_train_batches
+    if limit_val_batches is not None:
+        trainer_config["limit_val_batches"] = limit_val_batches
     trainer = L.Trainer(**trainer_config)
 
     # get datasets

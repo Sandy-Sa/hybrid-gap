@@ -219,3 +219,6 @@ __marimo__/
 
 data/*
 !data/.gitkeep
+lightning_logs/
+models/
+.wandb/

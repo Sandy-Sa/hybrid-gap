@@ -37,6 +37,16 @@ class LowRankAdaptationConfig:
 
 
 @dataclass
+class OptimiserConfig:
+    lr: float = 1e-3
+    weight_decay: float = 1e-3
+    betas: tuple = (0.9, 0.95)
+
+
+torch.serialization.add_safe_globals([OptimiserConfig, LowRankAdaptationConfig])
+
+
+@dataclass
 class MetricSpec:
     """Specification for a metric to log during training/validation/testing."""
 
