@@ -1,7 +1,6 @@
 from pathlib import Path
 import torch
 import os
-import json
 import polars as pl
 from coding.data.data_prep import get_dataloaders
 from coding.modules.base import LowRankAdaptationConfig
@@ -194,19 +193,18 @@ def train(
         "callbacks": [checkpoint_callback, LearningRateMonitor("epoch"), es],
         "deterministic": True,
         "profiler": "simple",
-        "limit_test_batches": 0.1,
     }
     trainer = L.Trainer(**trainer_config)
 
     # get datasets
-    train_loader, val_loader, test_loader = get_dataloaders(
+    train_loader, val_loader, _ = get_dataloaders(
         data_path, seed=seed, **kwargs
     )
 
     n_classes = len(train_loader.dataset.data["target_tensor"][0])
 
     code_index_groups = _collect_code_groups(
-        (train_loader, val_loader, test_loader), data_path / "class_map.parquet"
+        (train_loader, val_loader), data_path / "class_map.parquet"
     )
 
     model_kwargs = {
@@ -243,9 +241,6 @@ def train(
         train_dataloaders=train_loader,
         val_dataloaders=val_loader,
     )
-    results = trainer.test(dataloaders=test_loader, ckpt_path="best")[0]
-    with open("models/results.json", "w") as f:
-        json.dump(results, f)
 
 
 if __name__ == "__main__":

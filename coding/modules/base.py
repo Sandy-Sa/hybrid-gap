@@ -6,6 +6,7 @@ from torch.nn import functional as F
 from peft import get_peft_model, LoraConfig
 from typing import Optional, Callable
 from dataclasses import dataclass
+from pathlib import Path
 import json
 
 # from coding.modules.attention import LabelAttention
@@ -172,6 +173,9 @@ class LitLLM(LightningModule):
 
         self.log_code_types = log_code_types
         self.code_index_groups = code_index_groups or {}
+        # Destination for predictions.json dumped by on_test_epoch_end; reassign
+        # before calling trainer.test() to write into a different directory.
+        self.predictions_path: Path = Path("models/predictions.json")
 
         # freeze all parameters by default
         for param in self.llm.parameters():
@@ -613,7 +617,9 @@ class LitLLM(LightningModule):
         first_diag = (
             torch.cat(self._test_first_diag).tolist() if self._test_first_diag else None
         )
-        with open("models/predictions.json", "w") as f:
+        output_path = Path(self.predictions_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
             json.dump(
                 {
                     "labels": labels,

@@ -1,0 +1,244 @@
+# Combined DVC pipeline for the hybrid SFT + LLM gap-fill ICD coder.
+#
+# Stage 1 (SFT):  pre_processing → prepare → train_classifier → evaluate_sft
+# Stage 2 (LLM):  verification_sft → gap_analysis_pass2 → search_pass2 → verification_top_n
+#
+# evaluate_sft is the bridge: it sweeps decision thresholds on val and writes
+# predictions.json into ${dataset_path}, which verification_sft consumes.
+
+stages:
+
+  # ── STAGE 1: SFT ───────────────────────────────────────────────────────────
+  pre_processing:
+    cmd: >-
+      python pre_process.py
+      ${raw_data_path}
+      ${dataset_name}
+      --remove_lab_results ${remove_lab_results}
+      --processed_data_path ${processed_data_path}
+    deps:
+      - pre_process.py
+    params:
+      - raw_data_path
+      - dataset_name
+      - processed_data_path
+      - remove_lab_results
+    outs:
+      - ${processed_data_path}
+
+  prepare:
+    cmd: >-
+      python prepare.py
+      ${processed_data_path}
+      ${dataset_path}
+      ${prepare.target_type}
+      ${prepare.target_columns}
+      ${model_name}
+      ${prepare.split_path}
+      --max_length ${seq_len}
+      --batch_size ${prepare.batch_size}
+      --truncation_side ${prepare.truncation_side}
+    deps:
+      - ${processed_data_path}
+      - prepare.py
+    params:
+      - prepare
+      - model_name
+      - seq_len
+    outs:
+      - ${dataset_path}train_dataset.parquet
+      - ${dataset_path}val_dataset.parquet
+      - ${dataset_path}test_dataset.parquet
+      - ${dataset_path}class_map.parquet
+
+  train_classifier:
+    cmd: >-
+      python train.py
+      --model_name ${model_name}
+      --ckp_path ${train.ckp_path}
+      --data_path ${dataset_path}
+      --module ${train.module}
+      --max_epochs ${train.max_epochs}
+      --optimizer.lr ${train.lr}
+      --batch_size ${train.batch_size}
+      --update_batch ${train.update_batch}
+      --loss_weights ${train.loss_weights}
+      --hidden_state_index ${train.hidden_state_index}
+      --unfreeze ${train.unfreeze}
+      --n_blocks ${train.n_blocks}
+      --log_code_types ${train.log_code_types}
+      ${train.lora_config}
+      ${train.logger}
+    deps:
+      - ${dataset_path}train_dataset.parquet
+      - ${dataset_path}val_dataset.parquet
+      - ${dataset_path}class_map.parquet
+      - train.py
+      - coding/modules/base.py
+      - coding/modules/classifier.py
+      - coding/modules/label_attention.py
+      - coding/modules/label_cross_attention.py
+    params:
+      - train
+      - model_name
+    outs:
+      - models/model.ckpt
+
+  evaluate_sft:
+    cmd: >-
+      python evaluate_sft.py
+      --data_path ${dataset_path}
+      --ckpt_path ${evaluate_sft.ckpt_path}
+      --module ${train.module}
+      --batch_size ${evaluate_sft.batch_size}
+      --seed ${seed}
+    deps:
+      - evaluate_sft.py
+      - ${dataset_path}val_dataset.parquet
+      - ${dataset_path}test_dataset.parquet
+      - ${dataset_path}class_map.parquet
+      - ${evaluate_sft.ckpt_path}
+      - coding/modules/base.py
+      - coding/modules/classifier.py
+      - coding/modules/label_attention.py
+      - coding/modules/label_cross_attention.py
+    params:
+      - evaluate_sft
+      - train.module
+      - seed
+    outs:
+      - ${dataset_path}predictions.json
+      - ${dataset_path}optimal_thresholds.json
+      - ${dataset_path}val_metrics.json
+
+  # ── STAGE 2: LLM gap-fill ──────────────────────────────────────────────────
+  verification_sft:
+    cmd: >-
+      python verification.py run_verification
+      --data_path ${dataset_path}
+      --code_description_path ${code_description_path}
+      --description_column ${description_column}
+      --threshold_high ${threshold}
+      --threshold_low ${verification.threshold_low}
+      --separate_by_code_type ${verification.separate_by_code_type}
+      --model ${model}
+      --reasoning_effort ${reasoning_effort}
+      --output_dir ${output_dir}
+      --seed ${seed}
+      --max_concurrent ${max_concurrent}
+      --max_output_tokens ${max_output_tokens}
+      --chunk_size ${verification.chunk_size}
+      --guidelines_path ${guidelines_path}
+      --code_type ${code_type}
+    deps:
+      - verification.py
+      - coding/llm/verification.py
+      - ${dataset_path}predictions.json
+      - ${dataset_path}test_dataset.parquet
+      - ${dataset_path}class_map.parquet
+      - ${code_description_path}
+    params:
+      - model
+      - reasoning_effort
+      - verification.threshold_low
+      - threshold
+      - verification.separate_by_code_type
+      - seed
+      - max_concurrent
+      - max_output_tokens
+      - verification.chunk_size
+      - description_column
+      - code_type
+    outs:
+      - outputs/in_band_verification.jsonl
+
+  gap_analysis_pass2:
+    cmd: >-
+      python gap_analysis.py
+      --data_path ${dataset_path}
+      --code_description_path ${code_description_path}
+      --description_column ${description_column}
+      --threshold ${threshold}
+      --model ${model}
+      --reasoning_effort ${reasoning_effort}
+      --output_dir ${output_dir}
+      --seed ${seed}
+      --max_concurrent ${max_concurrent}
+      --max_output_tokens ${max_output_tokens}
+      --pass_index 2
+      --verification_path outputs/in_band_verification.jsonl
+      --code_type ${code_type}
+    deps:
+      - gap_analysis.py
+      - coding/llm/gap_analysis.py
+      - coding/pipeline/data_loader.py
+      - coding/pipeline/gap_pipeline.py
+      - outputs/in_band_verification.jsonl
+      - ${dataset_path}predictions.json
+      - ${dataset_path}test_dataset.parquet
+      - ${dataset_path}class_map.parquet
+      - ${code_description_path}
+    params:
+      - model
+      - threshold
+      - reasoning_effort
+      - seed
+      - max_concurrent
+      - max_output_tokens
+      - description_column
+      - code_type
+    outs:
+      - outputs/gap_analysis_pass2.jsonl
+
+  search_pass2:
+    cmd: >-
+      python search.py
+      --code_dir ${code_description_path}
+      --mrconso_path ${search.mrconso_path}
+      --code_type ${code_type}
+      --extraction_path outputs/gap_analysis_pass2.jsonl
+      --min_score ${search.min_score}
+    deps:
+      - search.py
+      - outputs/gap_analysis_pass2.jsonl
+    params:
+      - search.min_score
+      - search.mrconso_path
+      - code_type
+    outs:
+      - outputs/gap_analysis_pass2_searched.parquet
+
+  verification_top_n:
+    cmd: >-
+      python verification.py run_verify_top_n
+      --searched_path outputs/gap_analysis_pass2_searched.parquet
+      --data_path ${dataset_path}
+      --code_description_path ${code_description_path}
+      --description_column ${description_column}
+      --top_n ${verification.top_n}
+      --model ${model}
+      --reasoning_effort ${reasoning_effort}
+      --output_dir ${output_dir}
+      --max_concurrent ${max_concurrent}
+      --seed ${seed}
+      --max_output_tokens ${max_output_tokens}
+      --chunk_size ${verification.chunk_size}
+      --guidelines_path ${guidelines_path}
+      --code_type ${code_type}
+    deps:
+      - verification.py
+      - coding/llm/verification.py
+      - outputs/gap_analysis_pass2_searched.parquet
+      - ${dataset_path}test_dataset.parquet
+    params:
+      - model
+      - reasoning_effort
+      - verification.top_n
+      - max_concurrent
+      - seed
+      - max_output_tokens
+      - verification.chunk_size
+      - description_column
+      - code_type
+    outs:
+      - outputs/searched_topn_verification.jsonl
