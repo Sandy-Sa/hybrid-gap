@@ -108,6 +108,7 @@ stages:
       - seed
     outs:
       - ${dataset_path}predictions.json
+      - ${dataset_path}val_predictions.json
       - ${dataset_path}optimal_thresholds.json
       - ${dataset_path}val_metrics.json
 
@@ -242,3 +243,27 @@ stages:
       - code_type
     outs:
       - outputs/searched_topn_verification.jsonl
+
+  # ── EVAL: paper-results producers ───────────────────────────────────────────
+  evaluate:
+    cmd: python -m coding.eval.run_all
+    deps:
+      - coding/eval
+      - ${dataset_path}predictions.json
+      - ${dataset_path}val_predictions.json
+      - ${dataset_path}optimal_thresholds.json
+      - ${dataset_path}class_map.parquet
+      - ${dataset_path}train_dataset.parquet
+      - ${dataset_path}test_dataset.parquet
+      - ${output_dir}/in_band_verification.jsonl
+      - ${output_dir}/gap_analysis_pass2.jsonl
+      - ${output_dir}/gap_analysis_pass2_searched.parquet
+      - ${output_dir}/searched_topn_verification.jsonl
+      - ${processed_data_path}
+    params:
+      - eval
+      - code_type
+      - dataset_name
+    outs:
+      - ${output_dir}/eval
+      - data/freq_bands.json

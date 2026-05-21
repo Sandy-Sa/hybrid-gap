@@ -53,7 +53,7 @@ max_output_tokens:
 max_concurrent: 32
 threshold: 0.5                       # SFT decision threshold (set from optimal_thresholds.json after eval)
 description_column: LONG_TITLE
-code_type: ICD-10
+code_type: ICD-9
 
 # === LLM paths ===
 code_description_path: /datasets/mimic/mimic-iv-3.1/hosp/

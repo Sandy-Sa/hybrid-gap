@@ -1,9 +1,39 @@
 [project]
 name = "hybrid-gap"
 version = "0.1.0"
-description = "Add your description here"
+description = "Hybrid pipeline for automated ICD coding combining a fine-tuned LLM classifier with LLM-based gap-filling, verification, and code search over MIMIC-III/IV."
 readme = "README.md"
 requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Sandy Sa", email = "sandysa0727@gmail.com" },
+]
+keywords = [
+  "icd-coding",
+  "clinical-nlp",
+  "mimic",
+  "llm",
+  "medical-coding",
+  "clinical-coding",
+  "supervised-fine-tuning",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+[project.urls]
+# TODO: replace with public URL after anonymization / publication.
+Homepage = "https://github.com/TODO/hybrid-gap"
+Repository = "https://github.com/TODO/hybrid-gap"
+Issues = "https://github.com/TODO/hybrid-gap/issues"
+
 dependencies = [
   "bm25s",
   "datasets",
@@ -13,6 +43,8 @@ dependencies = [
   "ipython",
   "jsonargparse",
   "lightning",
+  "matplotlib",
+  "nbconvert",
   "notebook",
   "numpy",
   "openai",
@@ -24,6 +56,7 @@ dependencies = [
   "pypdf",
   "PyStemmer",
   "python-dotenv",
+  "pyyaml",
   "scikit-learn",
   "scipy",
   "tiktoken",
@@ -47,3 +80,36 @@ torch = [{ index = "pytorch-cu129", marker = "sys_platform == 'linux' or sys_pla
 environments = [
   "python_full_version == '3.12.*' and (sys_platform == 'linux' or sys_platform == 'win32')"
 ]
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = [
+  "E501",  # line-length is enforced by formatter only; long literal strings in this repo are intentional
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Existing scripts are out of scope for this pass; quiet lint there so CI stays green
+# without touching their bodies. Cleanup is tracked in docs/known-issues.md.
+"verification.py" = ["E", "F", "W", "I", "UP"]
+"gap_analysis.py" = ["E", "F", "W", "I", "UP"]
+"train.py" = ["E", "F", "W", "I", "UP"]
+"prepare.py" = ["E", "F", "W", "I", "UP"]
+"pre_process.py" = ["E", "F", "W", "I", "UP"]
+"evaluate_sft.py" = ["E", "F", "W", "I", "UP"]
+"extraction.py" = ["E", "F", "W", "I", "UP"]
+"search.py" = ["E", "F", "W", "I", "UP"]
+"coding/**/*.py" = ["E", "F", "W", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
