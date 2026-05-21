@@ -19,20 +19,25 @@ import tiktoken
 
 from coding.pipeline.data_loader import _normalize_code_type
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-_ALWAYS_ON_TYPES = frozenset({
-    "general", "principal_dx", "additional_dx", "outpatient", "convention",
-})
+_ALWAYS_ON_TYPES = frozenset(
+    {
+        "general",
+        "principal_dx",
+        "additional_dx",
+        "outpatient",
+        "convention",
+    }
+)
 
 # Priority scores for ranking tiers (higher = more important)
-_TIER_CODE_MENTION = 4.0   # rule explicitly names the candidate code
-_TIER_CODE_RANGE = 3.0     # rule belongs to same ICD-9 chapter
-_TIER_BM25 = 2.0           # BM25 semantic match
-_TIER_ALWAYS_ON = 1.0      # general/principal_dx/additional_dx rules
+_TIER_CODE_MENTION = 4.0  # rule explicitly names the candidate code
+_TIER_CODE_RANGE = 3.0  # rule belongs to same ICD-9 chapter
+_TIER_BM25 = 2.0  # BM25 semantic match
+_TIER_ALWAYS_ON = 1.0  # general/principal_dx/additional_dx rules
 
 # Token budgets
 _DEFAULT_MAX_TOKENS = 1500
@@ -42,6 +47,7 @@ _ALWAYS_ON_BUDGET_FRACTION = 0.2  # 20% of budget reserved for always-on
 # ---------------------------------------------------------------------------
 # GuidelineSearcher
 # ---------------------------------------------------------------------------
+
 
 class GuidelineSearcher:
     """Retrieve relevant ICD coding guidelines for prompt injection.
@@ -82,15 +88,14 @@ class GuidelineSearcher:
         self._code_range_index = self._build_code_range_index()
         self._code_mention_index = self._build_code_mention_index()
         self._always_on_indices = [
-            i for i, e in enumerate(self.entries)
+            i
+            for i, e in enumerate(self.entries)
             if e["guideline_type"] in _ALWAYS_ON_TYPES
         ]
 
         # BM25 index over rule_text
         self._stemmer = Stemmer.Stemmer("english")
-        corpus_tokens = [
-            self._tokenize_and_stem(e["rule_text"]) for e in self.entries
-        ]
+        corpus_tokens = [self._tokenize_and_stem(e["rule_text"]) for e in self.entries]
         self._bm25 = bm25s.BM25()
         self._bm25.index(corpus_tokens)
 
@@ -179,7 +184,9 @@ class GuidelineSearcher:
         used = 0
         for idx, _score in ranked:
             entry = self.entries[idx]
-            text = self._truncate_at_sentence(entry["rule_text"].strip(), max_tokens - used)
+            text = self._truncate_at_sentence(
+                entry["rule_text"].strip(), max_tokens - used
+            )
             if not text:
                 continue
             cost = len(self._enc.encode(text))
@@ -320,7 +327,12 @@ class GuidelineSearcher:
         Assumes 3-char `[A-Z]\\d\\d` category format. Silently returns an empty
         list when inputs don't match (covers empty or malformed PCS ranges).
         """
-        if len(start) != 3 or len(end) != 3 or not start[0].isalpha() or not end[0].isalpha():
+        if (
+            len(start) != 3
+            or len(end) != 3
+            or not start[0].isalpha()
+            or not end[0].isalpha()
+        ):
             return []
         try:
             s_letter, s_num = start[0], int(start[1:])
@@ -364,12 +376,12 @@ class GuidelineSearcher:
         tokens = text.lower().split()
         return self._stemmer.stemWords(tokens)
 
-    def _bm25_search(
-        self, query: str, top_k: int = 20
-    ) -> list[tuple[int, float]]:
+    def _bm25_search(self, query: str, top_k: int = 20) -> list[tuple[int, float]]:
         """BM25 search, returns [(entry_index, score), ...]."""
         query_tokens = self._tokenize_and_stem(query)
-        results, scores = self._bm25.retrieve([query_tokens], k=min(top_k, len(self.entries)))
+        results, scores = self._bm25.retrieve(
+            [query_tokens], k=min(top_k, len(self.entries)), show_progress=False
+        )
         return list(zip(results[0].tolist(), scores[0].tolist()))
 
     # ------------------------------------------------------------------
