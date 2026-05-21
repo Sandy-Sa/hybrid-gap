@@ -8,7 +8,7 @@ from coding.utils.helpers import (
     safe_model_name,
 )
 from coding.pipeline.data_loader import load_icd_descriptions, prepare_predictions
-from coding.pipeline.io import load_predictions
+from coding.pipeline.io import load_optimal_thresholds, load_predictions
 from coding.llm.verification import (
     generate_responses,
     generate_top_n_responses,
@@ -28,8 +28,8 @@ async def run_verification(
     data_path: Path,
     code_description_path: Path,
     description_column: str,
-    threshold_high: float,
-    threshold_low: float,
+    threshold_high: float | None,
+    threshold_low: float | None,
     separate_by_code_type: bool,
     model: str,
     reasoning_effort: str,
@@ -42,6 +42,13 @@ async def run_verification(
     code_type: str = "ICD-9",
     task_timeout: float | None = None,
 ) -> None:
+    if threshold_high is None or threshold_low is None:
+        opt = load_optimal_thresholds(data_path)
+        if threshold_high is None:
+            threshold_high = float(opt["micro"])
+        if threshold_low is None:
+            threshold_low = float(opt["macro"])
+
     if guidelines_path is not None:
         init_guideline_searcher(guidelines_path, code_type=code_type)
 
@@ -313,8 +320,8 @@ async def run_verification_per_code(
     data_path: Path,
     code_description_path: Path,
     description_column: str,
-    threshold_high: float,
-    threshold_low: float,
+    threshold_high: float | None,
+    threshold_low: float | None,
     separate_by_code_type: bool,
     model: str,
     reasoning_effort: str,
@@ -328,6 +335,13 @@ async def run_verification_per_code(
     task_timeout: float | None = None,
 ) -> None:
     """Verify codes one per row (no chunking/grouping) using generate_per_code_responses."""
+    if threshold_high is None or threshold_low is None:
+        opt = load_optimal_thresholds(data_path)
+        if threshold_high is None:
+            threshold_high = float(opt["micro"])
+        if threshold_low is None:
+            threshold_low = float(opt["macro"])
+
     if guidelines_path is not None:
         init_guideline_searcher(guidelines_path, code_type=code_type)
 

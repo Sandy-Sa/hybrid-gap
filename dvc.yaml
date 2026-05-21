@@ -135,6 +135,7 @@ stages:
       - verification.py
       - coding/llm/verification.py
       - ${dataset_path}predictions.json
+      - ${dataset_path}optimal_thresholds.json
       - ${dataset_path}test_dataset.parquet
       - ${dataset_path}class_map.parquet
       - ${code_description_path}
@@ -176,6 +177,7 @@ stages:
       - coding/pipeline/gap_pipeline.py
       - outputs/in_band_verification.jsonl
       - ${dataset_path}predictions.json
+      - ${dataset_path}optimal_thresholds.json
       - ${dataset_path}test_dataset.parquet
       - ${dataset_path}class_map.parquet
       - ${code_description_path}

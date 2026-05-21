@@ -13,7 +13,7 @@ import polars as pl
 from pathlib import Path
 from coding.pipeline.data_loader import load_icd_descriptions, prepare_predictions
 from coding.pipeline.gap_pipeline import merge_gap_codes
-from coding.pipeline.io import filter_existing
+from coding.pipeline.io import filter_existing, load_optimal_thresholds
 from coding.llm.gap_analysis import generate_responses as gap_generate
 from coding.utils.helpers import cast_id_columns_to_str, ensure_dict, format_id, get_id_columns
 from coding.utils.reproducibility import set_global_seed, DEFAULT_SEED
@@ -28,7 +28,7 @@ async def run_gap_analysis(
     data_path: Path,
     code_description_path: Path,
     description_column: str,
-    threshold: float,
+    threshold: float | None,
     model: str,
     reasoning_effort: str,
     output_dir: Path,
@@ -54,6 +54,9 @@ async def run_gap_analysis(
     """
     if pass_index == 2 and verification_path is None:
         raise ValueError("--verification_path is required when pass_index=2")
+
+    if threshold is None:
+        threshold = float(load_optimal_thresholds(data_path)["micro"])
 
     # --- Load shared data ---
     diagnoses, procedures = load_icd_descriptions(

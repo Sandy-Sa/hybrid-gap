@@ -12,6 +12,23 @@ def append_jsonl(path: Path, record: dict) -> None:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+def load_optimal_thresholds(data_path: Path) -> dict:
+    """Load ``{"micro": float, "macro": float}`` from optimal_thresholds.json.
+
+    Written by the ``evaluate_sft`` DVC stage. Pipeline scripts call this when
+    their ``--threshold`` / ``--threshold_low`` / ``--threshold_high`` CLI args
+    are left unset, so the operating point tracks the latest val sweep.
+    """
+    path = data_path / "optimal_thresholds.json"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"optimal_thresholds.json not found at {path}. "
+            "Run the `evaluate_sft` DVC stage first, or set "
+            "`threshold` / `verification.threshold_low` in params.yaml."
+        )
+    return json.loads(path.read_text())
+
+
 def load_predictions(data_path: Path) -> pl.DataFrame:
     """Load predictions.json from *data_path* into a per-row DataFrame.
 
