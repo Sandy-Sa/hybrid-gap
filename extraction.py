@@ -23,7 +23,6 @@ async def extract_clinical_notes(
     task_timeout: float | None = None,
 ) -> None:
     data = cast_id_columns_to_str(pl.read_parquet(data_dir))
-    safe_model = model.replace("/", "_").replace(":", "_")
     output_path = output_dir / f"extraction.jsonl"
 
     data = filter_existing(data, output_path)

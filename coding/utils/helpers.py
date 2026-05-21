@@ -86,39 +86,14 @@ def filter_existing_responses(
     return filtered_data
 
 
-def one_hot_encode(target: list, class_map: dict) -> list:
+def safe_model_name(model: str) -> str:
+    """Sanitise a model identifier for use as a filesystem path component.
+
+    Replaces the characters that conflict with path semantics on common
+    filesystems (`/` as a path separator, `:` as a drive separator on
+    Windows). E.g. ``openai/gpt-oss-20b`` -> ``openai_gpt-oss-20b``.
     """
-    One-hot encode a list of target labels.
-
-    Args:
-        target (list): The list of target labels to encode.
-        class_map (dict): The mapping from target labels to indices.
-
-    Returns:
-        list: The one-hot encoded list.
-    """
-    num_classes = len(class_map)
-    one_hot_list = [0] * num_classes
-    target = set(target)
-    for label in target:
-        one_hot_list[class_map[label]] = 1
-    return one_hot_list
-
-
-def map_class(data: pl.LazyFrame, target_column: str) -> dict:
-    """Create a mapping from class labels to indices based on the target column.
-    Args:
-        data (pl.LazyFrame): The input data containing the target column.
-        target_column (str): The name of the target column to map.
-    Returns:
-        dict: A dictionary mapping class labels to indices.
-    """
-    # Extract unique class labels from
-    # the target column and create a mapping
-    # from class label to index.
-    data_class = data[target_column].explode().unique().to_list()
-    class_map = {data_class[i]: i for i in range(len(data_class))}
-    return class_map
+    return model.replace("/", "_").replace(":", "_")
 
 
 # ICD-9-CM / PCS patterns

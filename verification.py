@@ -5,7 +5,7 @@ from coding.utils.helpers import (
     cast_id_columns_to_str,
     get_id_columns,
     resolve_all_descriptions,
-    map_class,
+    safe_model_name,
 )
 from coding.pipeline.data_loader import load_icd_descriptions, prepare_predictions
 from coding.pipeline.io import load_predictions
@@ -393,7 +393,7 @@ async def run_verification_per_code(
         diag_df = grouped.filter(pl.col("code_type") == "diagnosis").drop("code_type")
         proc_df = grouped.filter(pl.col("code_type") == "procedure").drop("code_type")
 
-        safe_model = model.replace("/", "_").replace(":", "_")
+        safe_model = safe_model_name(model)
         diag_output = (
             output_dir
             / safe_model
@@ -438,7 +438,7 @@ async def run_verification_per_code(
     else:
         grouped = df.join(data.select(id_cols + ["text"]), on=id_cols, how="left")
 
-        safe_model = model.replace("/", "_").replace(":", "_")
+        safe_model = safe_model_name(model)
         output_path = (
             output_dir
             / safe_model
