@@ -69,6 +69,21 @@ A `pip` fallback exists via [`requirements.txt`](requirements.txt):
 pip install -r requirements.txt
 ```
 
+Note that the `pip` path does **not** apply the CUDA 12.9 PyTorch wheel pin that `uv sync` does (see `[tool.uv.sources]` in [`pyproject.toml`](pyproject.toml)); install the matching `torch` wheel manually if you need GPU.
+
+### First-time setup
+
+Before the first `dvc repro`, edit [`params.yaml`](params.yaml) so the following keys point at your local copies of the external datasets (see [docs/data.md](docs/data.md) for download instructions):
+
+| Key | Default (author's env) | What it should point at |
+|---|---|---|
+| `raw_data_path` | `/datasets/mimic/` | Directory containing the MIMIC CSVs consumed by `pre_process.py` |
+| `code_description_path` | `/datasets/mimic/mimic-iv-3.1/hosp/` | Directory containing the ICD code description tables (MIMIC-IV `d_icd_*` files) |
+| `guidelines_path` | `/home/sandy/repos/prompt-icd/data/guidelines/icd10_guidelines.parquet` | Parsed ICD-10 coding guidelines (optional; only used by the verification stage) |
+| `search.mrconso_path` | `/datasets/umls/MRCONSO.RRF` | UMLS MRCONSO file (optional; only used by `search.py` for synonym expansion) |
+
+Then copy [`.env.example`](.env.example) to `.env` and fill in the LLM endpoint.
+
 ## Configuration
 
 There are two configuration surfaces:

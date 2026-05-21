@@ -6,6 +6,8 @@ ipykernel
 ipython
 jsonargparse
 lightning
+matplotlib
+nbconvert
 notebook
 numpy
 openai
@@ -17,6 +19,7 @@ pydantic
 pypdf
 PyStemmer
 python-dotenv
+pyyaml
 scikit-learn
 scipy
 tiktoken
