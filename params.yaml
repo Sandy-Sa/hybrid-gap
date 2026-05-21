@@ -2,7 +2,7 @@
 seed: 314
 
 # === SFT data prep ===
-raw_data_path: /datasets/mimic/
+raw_data_path: /scratch/gp50/zs5704/datasets/mimic-data/
 processed_data_path: data/processed_data.parquet
 dataset_name: MIMIC-III-CLEAN
 remove_lab_results: true
@@ -16,22 +16,22 @@ prepare:
 seq_len: 4096
 
 # === SFT train ===
-model_name: Qwen/Qwen3-0.6B       
+model_name: Qwen/Qwen3-4B-Base
 train:
   ckp_path: none
-  module: label_attention
-  lr: 1e-4
-  max_epochs: 30
-  batch_size: 8
+  module: label_cross_attention
+  lr: 5e-4
+  max_epochs: 15
+  batch_size: 4
   update_batch: 64
   loss_weights: none
   hidden_state_index: -1
-  unfreeze: last
+  unfreeze: lora
   n_blocks: 0
   log_code_types: all
   lora_config:
     lora_config:
-      r: 64
+      r: 32
       lora_alpha: 16
       target_modules: '[q_proj, k_proj, v_proj, o_proj, up_proj, down_proj]'
       lora_dropout: 0.1
@@ -44,34 +44,34 @@ train:
 # === SFT evaluate (val threshold sweep + test predictions) ===
 evaluate_sft:
   ckpt_path: models/model.ckpt
-  batch_size: 8
+  batch_size: 64
 
 # === LLM gap-fill / verification (shared) ===
 model: openai/gpt-oss-20b            # LLM used by gap_analysis/verification
 reasoning_effort: low
 max_output_tokens:
-max_concurrent: 32
-threshold: 0.5                       # SFT decision threshold (set from optimal_thresholds.json after eval)
+max_concurrent: 96
+threshold:                           # auto from optimal_thresholds.json[micro] after evaluate_sft; set explicitly for a manual sweep
 description_column: LONG_TITLE
 code_type: ICD-9
 
 # === LLM paths ===
-code_description_path: /datasets/mimic/mimic-iv-3.1/hosp/
+code_description_path: /scratch/gp50/zs5704/datasets/mimic-data/mimic-iii-clinical-database-1.4/
 output_dir: outputs
-guidelines_path: /home/sandy/repos/prompt-icd/data/guidelines/icd10_guidelines.parquet
+guidelines_path: /scratch/gp50/zs5704/projects/prompt-icd/datasets/guidelines/icd9cm_guidelines.parquet
 
 search:
   top_k: 5
   min_score: 0.015
-  mrconso_path: /datasets/umls/MRCONSO.RRF
+  mrconso_path: /scratch/gp50/zs5704/datasets/umls/MRCONSO.RRF
 
 verification:
   top_n: 5
   chunk_size: 20
-  threshold_low: 0.15
+  threshold_low:                     # auto from optimal_thresholds.json[macro] after evaluate_sft; set explicitly for a manual sweep
   separate_by_code_type: false
 
 # === Eval ===
 eval:
-  tau_macro: null
-  tau_micro: null
+  tau_macro: 
+  tau_micro: 
