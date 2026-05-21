@@ -3,6 +3,21 @@ import re
 import json
 from typing import Optional
 
+
+def get_base_model(identifier: str) -> str:
+    """
+    Extracts the "base model class" (e.g. 'llama3.2', 'qwen3') from strings like
+    'meta-llama/Llama-3.2-1B' or 'Qwen/Qwen3-8B'.
+    """
+    m = re.match(r"^(?:.*/)?([A-Za-z]+)(?:[-_]?(\d+(?:\.\d+)*))?(?=[^/]*$)", identifier)
+    if not m:
+        raise ValueError(f"couldn't parse model from {identifier!r}")
+    model, version = m.groups()
+    if version is not None:
+        return f"{model.lower()}{version}"
+    return model.lower()
+
+
 # Ordered list of candidate ID columns; checked in this order.
 _ID_CANDIDATES = ["note_id", "event_id", "subject_id"]
 

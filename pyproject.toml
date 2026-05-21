@@ -28,11 +28,9 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
 
-[project.urls]
-# TODO: replace with public URL after anonymization / publication.
-Homepage = "https://github.com/TODO/hybrid-gap"
-Repository = "https://github.com/TODO/hybrid-gap"
-Issues = "https://github.com/TODO/hybrid-gap/issues"
+# [project.urls] intentionally omitted until the repo has a public home.
+# Add it back as a single block once the canonical Homepage/Repository/Issues
+# URLs are known (e.g. after de-anonymization or upon publication).
 
 dependencies = [
   "bm25s",

@@ -137,6 +137,21 @@ uv run jupyter nbconvert --to notebook --execute \
 
 The notebook only reads cached artifacts — it does no recomputation. The dataset under evaluation is the one configured in `params.yaml` (`dataset_name`, `code_type`, `dataset_path`).
 
+## Baselines
+
+[`coding/baselines/`](coding/baselines/) contains a zero/few-shot LLM-only baseline that bypasses the SFT classifier and the gap-fill pipeline entirely — it asks the LLM to predict ICD codes directly from each note. It is intentionally **not** part of `dvc repro`; it exists so the full pipeline can be benchmarked against a "prompt-only" reference.
+
+```bash
+# Run the baseline against a parquet of notes (override paths to your env).
+python -m coding.baselines.run_generate \
+    --data_dir <path-to-notes.parquet> \
+    --output_dir <path-to-output-dir> \
+    --model openai/gpt-oss-20b \
+    --reasoning_effort low
+```
+
+`run_generate.py` uses the same `.env` LLM endpoint as the main pipeline. Outputs are JSONL of `{diagnosis_codes, procedure_codes}` per note, scorable with the same evaluation code as the full pipeline. The defaults in [`coding/baselines/run_generate.py`](coding/baselines/run_generate.py) point at the original author's scratch paths — override `--data_dir` and `--output_dir` for your machine.
+
 ## Testing
 
 ```bash

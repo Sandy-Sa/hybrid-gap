@@ -7,7 +7,7 @@ import pyarrow.feather as feather
 
 from coding.data.data_prep import map_class, one_hot_encode
 from coding.data.pre_process_functions import remove_rare_codes
-from coding.utils.utils import get_base_model
+from coding.utils.helpers import get_base_model
 from coding.utils.reproducibility import DEFAULT_SEED, set_global_seed
 
 from transformers import AutoTokenizer

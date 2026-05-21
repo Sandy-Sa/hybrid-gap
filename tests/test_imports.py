@@ -24,8 +24,8 @@ def _module_names() -> list[str]:
     """
     names: list[str] = []
     for path in sorted(PACKAGE_ROOT.rglob("*.py")):
-        # Files with hyphens (e.g. PLM-ICD.py) cannot be imported via the
-        # dotted path — skip them explicitly.
+        # Files with hyphens in the stem cannot be imported via the dotted
+        # path — skip them defensively if any are ever added.
         if "-" in path.stem:
             continue
         rel = path.relative_to(REPO_ROOT).with_suffix("")

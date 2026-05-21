@@ -70,3 +70,8 @@ verification:
   chunk_size: 20
   threshold_low: 0.15
   separate_by_code_type: false
+
+# === Eval ===
+eval:
+  tau_macro: null
+  tau_micro: null
