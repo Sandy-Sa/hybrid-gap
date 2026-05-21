@@ -1,7 +1,7 @@
 from pathlib import Path
 import polars as pl
 import re
-from coding.utils.settings import (
+from coding.utils.model_config import (
     ID_COLUMN,
     TEXT_COLUMN,
     SUBJECT_ID_COLUMN,

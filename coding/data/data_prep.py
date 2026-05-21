@@ -2,7 +2,7 @@ import polars as pl
 import torch
 from torch.utils.data import DataLoader, Dataset
 from pathlib import Path
-from coding.utils.settings import ID_COLUMN
+from coding.utils.model_config import ID_COLUMN
 
 
 def _load_class_map(map_path: Path) -> dict[str, int]:

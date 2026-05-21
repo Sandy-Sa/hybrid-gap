@@ -2,7 +2,7 @@ from jsonargparse import CLI
 from pathlib import Path
 import polars as pl
 
-from coding.data.settings import DATASETS
+from coding.data.dataset_config import DATASETS
 from coding.data.pre_process_functions import (
     pre_process_mimiciii,
     pre_process_mimiciv,

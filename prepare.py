@@ -12,7 +12,7 @@ from coding.utils.reproducibility import DEFAULT_SEED, set_global_seed
 
 from transformers import AutoTokenizer
 from typing import Literal, Optional  # Optional kept for class_map
-from coding.utils.settings import (
+from coding.utils.model_config import (
     ID_COLUMN,
     TEXT_COLUMN,
     TARGET_COLUMN,
