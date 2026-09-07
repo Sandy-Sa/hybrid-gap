@@ -8,8 +8,7 @@ classifier with LLM-based gap-filling, verification, and embedding-search
 code expansion for automated ICD coding over MIMIC-III/IV discharge
 summaries.
 
-> **Status.** This repository accompanies a paper under submission to
-> **EMNLP 2026**. It is mirrored to
+> **Status.** This repository accompanies a paper under double-blind review. It is mirrored to
 > [anonymous.4open.science](https://anonymous.4open.science) for double-blind
 > review. Author names, institutions, project paths, and the
 > `[tool.uv.sources]` index inside [`pyproject.toml`](pyproject.toml) will be
